@@ -1,0 +1,3 @@
+./qemu/qemu-system-x86_64 -curses -m 8G -drive file=../parsec_roi/linux-n.qcow2,cache=unsafe -simconfig simconfig.txt
+
+#./qemu/qemu-system-x86_64 -net nic,model=ne2k_pci -net user -curses -m 8G -hda ../disk/linux-a.qcow2 -hdb ../disk/linux-c.raw -simconfig simconfig.txt
