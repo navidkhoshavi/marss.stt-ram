@@ -67,3 +67,6 @@ gdb.txt
 
 # Any backup files
 *~
+
+# QEMU files
+qemu/*

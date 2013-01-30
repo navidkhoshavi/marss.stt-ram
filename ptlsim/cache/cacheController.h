@@ -145,6 +145,9 @@ class CacheController : public Controller
 		// Cache Access Latency
 		int cacheAccessLatency_;
 
+		// Cache Cycle Time
+		int cacheCycleTime_;
+
 		// A Queue conatining pending requests for this cache
 		FixStateList<CacheQueueEntry, 128> pendingRequests_;
 

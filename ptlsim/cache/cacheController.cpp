@@ -70,6 +70,7 @@ CacheController::CacheController(W8 coreid, const char *name,
 
     cacheLineBits_ = cacheLines_->get_line_bits();
     cacheAccessLatency_ = cacheLines_->get_access_latency();
+    cacheCycleTime_ = cacheLines_->get_cycle_time();
 
 	cacheLines_->init();
 

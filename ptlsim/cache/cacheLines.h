@@ -85,13 +85,14 @@ namespace Memory {
             virtual void print(ostream& os) const =0;
             virtual int get_line_bits() const=0;
             virtual int get_access_latency() const=0;
+            virtual int get_cycle_time() const=0;
 			virtual int get_size() const=0;
 			virtual int get_set_count() const=0;
 			virtual int get_way_count() const=0;
 			virtual int get_line_size() const=0;
     };
 
-    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY>
+    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY, int CYCLE_TIME>
         class CacheLines : public CacheLinesBase,
         public AssociativeArray<W64, CacheLine, SET_COUNT,
         WAY_COUNT, LINE_SIZE>
@@ -114,6 +115,7 @@ namespace Memory {
             void init();
             W64 tagOf(W64 address);
             int latency() const { return LATENCY; };
+	    int cycle_time() const {return CYCLE_TIME; };
             CacheLine* probe(MemoryRequest *request);
             CacheLine* insert(MemoryRequest *request, W64& oldTag);
             int invalidate(MemoryRequest *request);
@@ -163,28 +165,32 @@ namespace Memory {
             int get_access_latency() const {
                 return LATENCY;
             }
+
+	    int get_cycle_time() const {
+	      return CYCLE_TIME;
+	    }
     };
 
-    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY>
+    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY, int CYCLE_TIME>
         static inline ostream& operator <<(ostream& os, const
-                CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY>&
+					   CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY, CYCLE_TIME>&
                 cacheLines)
         {
             cacheLines.print(os);
             return os;
         }
 
-    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY>
+    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY, int CYCLE_TIME>
         static inline ostream& operator ,(ostream& os, const
-                CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY>&
+					  CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY, CYCLE_TIME>&
                 cacheLines)
         {
             cacheLines.print(os);
             return os;
         }
 
-    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY>
-        CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY>::CacheLines(int readPorts, int writePorts) :
+    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY, int CYCLE_TIME>
+      CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY, CYCLE_TIME>::CacheLines(int readPorts, int writePorts) :
             readPorts_(readPorts)
             , writePorts_(writePorts)
     {
@@ -193,8 +199,8 @@ namespace Memory {
         writePortUsed_ = 0;
     }
 
-    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY>
-        void CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY>::init()
+    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY, int CYCLE_TIME>
+      void CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY, CYCLE_TIME>::init()
         {
             foreach(i, SET_COUNT) {
                 Set &set = base_t::sets[i];
@@ -204,16 +210,16 @@ namespace Memory {
             }
         }
 
-    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY>
-        W64 CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY>::tagOf(W64 address)
+    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY, int CYCLE_TIME>
+      W64 CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY, CYCLE_TIME>::tagOf(W64 address)
         {
             return floor(address, LINE_SIZE);
         }
 
 
     // Return true if valid line is found, else return false
-    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY>
-        CacheLine* CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY>::probe(MemoryRequest *request)
+    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY, int CYCLE_TIME>
+      CacheLine* CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY, CYCLE_TIME>::probe(MemoryRequest *request)
         {
             W64 physAddress = request->get_physical_address();
             CacheLine *line = base_t::probe(physAddress);
@@ -221,8 +227,8 @@ namespace Memory {
             return line;
         }
 
-    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY>
-        CacheLine* CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY>::insert(MemoryRequest *request, W64& oldTag)
+    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY, int CYCLE_TIME>
+      CacheLine* CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY, CYCLE_TIME>::insert(MemoryRequest *request, W64& oldTag)
         {
             W64 physAddress = request->get_physical_address();
             CacheLine *line = base_t::select(physAddress, oldTag);
@@ -230,19 +236,19 @@ namespace Memory {
             return line;
         }
 
-    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY>
-        int CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY>::invalidate(MemoryRequest *request)
+    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY, int CYCLE_TIME>
+      int CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY, CYCLE_TIME>::invalidate(MemoryRequest *request)
         {
             return base_t::invalidate(request->get_physical_address());
         }
 
 
-    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY>
-        bool CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY>::get_port(MemoryRequest *request)
+    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY, int CYCLE_TIME>
+      bool CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY, CYCLE_TIME>::get_port(MemoryRequest *request)
         {
             bool rc = false;
 
-            if(lastAccessCycle_ < sim_cycle) {
+            if(lastAccessCycle_ + CYCLE_TIME < sim_cycle) {
                 lastAccessCycle_ = sim_cycle;
                 writePortUsed_ = 0;
                 readPortUsed_ = 0;
@@ -265,8 +271,8 @@ namespace Memory {
             return rc;
         }
 
-    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY>
-        void CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY>::print(ostream& os) const
+    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY, int CYCLE_TIME>
+      void CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY, CYCLE_TIME>::print(ostream& os) const
         {
             foreach(i, SET_COUNT) {
                 const Set &set = base_t::sets[i];
