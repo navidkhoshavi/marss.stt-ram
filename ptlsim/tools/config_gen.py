@@ -148,7 +148,7 @@ machine_core_option_add = '''
 '''
 
 cache_typedef_cacheline = '''
-typedef CacheLines<%s, %s, %s, %s, %s, %s> %sCacheLines;
+typedef CacheLines<%s, %s, %s, %s, %s, %s, %s> %sCacheLines;
 
 '''
 
@@ -705,6 +705,7 @@ def generate_cache_logic(config, options):
                 c_pfx + "ASSOC",
                 c_pfx + "LINE_SIZE",
                 c_pfx + "LATENCY",
+                c_pfx + "WRITE_LATENCY",
                 c_pfx + "CYCLE_TIME",
                 c_pfx + "BANKS",
                 c_pfx))

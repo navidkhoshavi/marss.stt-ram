@@ -70,6 +70,7 @@ CacheController::CacheController(W8 coreid, const char *name,
 
     cacheLineBits_ = cacheLines_->get_line_bits();
     cacheAccessLatency_ = cacheLines_->get_access_latency();
+    writeLatency_ = cacheLines_->get_write_latency();
     cacheCycleTime_ = cacheLines_->get_cycle_time();
 
 	cacheLines_->init();
@@ -505,7 +506,7 @@ bool CacheController::cache_insert_cb(void *arg)
 
 		queueEntry->eventFlags[CACHE_INSERT_COMPLETE_EVENT]++;
 		marss_add_event(&cacheInsertComplete_,
-				cacheAccessLatency_, queueEntry);
+				writeLatency_, queueEntry);
 		return true;
 	}
 
@@ -556,6 +557,11 @@ bool CacheController::cache_access_cb(void *arg)
 					type == MEMORY_OP_WRITE) {
 				signal = &cacheHit_;
 				delay = cacheAccessLatency_;
+
+				if (type == MEMORY_OP_WRITE) {
+				  delay = writeLatency_;
+				}
+
 				queueEntry->eventFlags[CACHE_HIT_EVENT]++;
 
 				if(type == MEMORY_OP_READ) {
@@ -586,7 +592,7 @@ bool CacheController::cache_access_cb(void *arg)
                  * going to be used, else do nothing
                  */
                 signal = &cacheInsertComplete_;
-                delay = cacheAccessLatency_;
+                delay = writeLatency_;
                 line->state = LINE_MODIFIED;
                 queueEntry->eventFlags[CACHE_INSERT_COMPLETE_EVENT]++;
 

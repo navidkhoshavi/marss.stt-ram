@@ -142,8 +142,11 @@ class CacheController : public Controller
 		// No of bits needed to find Cache Line address
 		int cacheLineBits_;
 
-		// Cache Access Latency
+		// Cache Access Latency (read latency)
 		int cacheAccessLatency_;
+
+		// Cache Write Latency
+		int writeLatency_;
 
 		// Cache Cycle Time
 		int cacheCycleTime_;
