@@ -148,6 +148,9 @@ class CacheController : public Controller
 		// Cache Write Latency
 		int writeLatency_;
 
+		// Tag Latency
+		int tagLatency_;
+
 		// Cache Cycle Time
 		int cacheCycleTime_;
 

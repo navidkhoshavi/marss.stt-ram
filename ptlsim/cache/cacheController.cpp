@@ -71,6 +71,7 @@ CacheController::CacheController(W8 coreid, const char *name,
     cacheLineBits_ = cacheLines_->get_line_bits();
     cacheAccessLatency_ = cacheLines_->get_access_latency();
     writeLatency_ = cacheLines_->get_write_latency();
+    tagLatency_ = cacheLines_->get_tag_latency();
     cacheCycleTime_ = cacheLines_->get_cycle_time();
 
 	cacheLines_->init();
@@ -608,7 +609,7 @@ bool CacheController::cache_access_cb(void *arg)
                 /* Else its an evict message from any coherent cache
                  * so ignore that. */
                 signal = &clearEntry_;
-                delay = cacheAccessLatency_;
+                delay = tagLatency_;
                 queueEntry->eventFlags[CACHE_CLEAR_ENTRY_EVENT]++;
             } else {
                 assert(0);
@@ -617,7 +618,7 @@ bool CacheController::cache_access_cb(void *arg)
 			if(type == MEMORY_OP_READ ||
 					type == MEMORY_OP_WRITE) {
 				signal = &cacheMiss_;
-				delay = cacheAccessLatency_;
+				delay = tagLatency_;
 				queueEntry->eventFlags[CACHE_MISS_EVENT]++;
 
 				if(type == MEMORY_OP_READ) {
@@ -634,7 +635,7 @@ bool CacheController::cache_access_cb(void *arg)
             /* else its update and its a cache miss, so ignore that */
 			else {
 				signal = &clearEntry_;
-				delay = cacheAccessLatency_;
+				delay = tagLatency_;
 				queueEntry->eventFlags[CACHE_CLEAR_ENTRY_EVENT]++;
 
                 // Send to lower cache/memory if write-back mode

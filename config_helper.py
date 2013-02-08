@@ -23,7 +23,7 @@ import copy
 
 # Module local variables and functions
 _required_cache_params = [
-        'SIZE', 'LINE_SIZE', 'ASSOC', 'LATENCY', 'WRITE_LATENCY', 'CYCLE_TIME', 'READ_PORTS', 'WRITE_PORTS', 'BANKS']
+        'SIZE', 'LINE_SIZE', 'ASSOC', 'LATENCY', 'WRITE_LATENCY', 'TAG_LATENCY', 'CYCLE_TIME', 'READ_PORTS', 'WRITE_PORTS', 'BANKS']
 _required_mem_params = ['LATENCY']
 _required_keys = {
         'config': ['core', 'cache', 'machine', 'memory'],
