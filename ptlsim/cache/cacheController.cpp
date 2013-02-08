@@ -69,10 +69,13 @@ CacheController::CacheController(W8 coreid, const char *name,
     }
 
     cacheLineBits_ = cacheLines_->get_line_bits();
+    cacheSetCount_ = cacheLines_->get_set_count();
+    cacheWayCount_ = cacheLines_->get_way_count();
     cacheAccessLatency_ = cacheLines_->get_access_latency();
     writeLatency_ = cacheLines_->get_write_latency();
     tagLatency_ = cacheLines_->get_tag_latency();
     cacheCycleTime_ = cacheLines_->get_cycle_time();
+    cacheTRef_ = cacheLines_->get_tref();
 
 	cacheLines_->init();
 

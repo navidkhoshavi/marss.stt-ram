@@ -142,6 +142,12 @@ class CacheController : public Controller
 		// No of bits needed to find Cache Line address
 		int cacheLineBits_;
 
+		// Cache Set Count
+		int cacheSetCount_;
+
+		// Cache Way Count
+		int cacheWayCount_;
+
 		// Cache Access Latency (read latency)
 		int cacheAccessLatency_;
 
@@ -153,6 +159,9 @@ class CacheController : public Controller
 
 		// Cache Cycle Time
 		int cacheCycleTime_;
+
+		// Cache Retention time
+		int cacheTRef_;
 
 		// A Queue conatining pending requests for this cache
 		FixStateList<CacheQueueEntry, 128> pendingRequests_;
