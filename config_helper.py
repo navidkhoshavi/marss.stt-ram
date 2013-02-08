@@ -90,7 +90,7 @@ def _check_required_key(req_objs, obj_key, obj, filename, objName=None):
         if type(key) == dict:
             for key1,val1 in key.items():
                 _check_required_key(key, key1, obj[key1], filename, objName)
-        elif not obj.has_key(key):
+        elif obj.has_key(key) is None:
             errmsg = "\nERROR:\n"
             errmsg += "\tFile: %s\n" % filename
             errmsg += "\tConfiguration: %s\n" % obj_key
@@ -98,7 +98,7 @@ def _check_required_key(req_objs, obj_key, obj, filename, objName=None):
                 errmsg += "\tObject: %s\n" % objName
             errmsg += "\tis Missing required key: %s" % key
             _error(errmsg)
-        elif not obj[key]:
+        elif obj[key] is None:
             errmsg = "\nERROR:\n"
             errmsg += "\tFile: %s\n" % filename
             errmsg += "\tConfiguration: %s\n" % obj_key
