@@ -377,7 +377,7 @@ bool CacheController::complete_request(Message &message,
         queueEntry->line = line;
         handle_cache_insert(queueEntry, oldTag);
         queueEntry->line->init(cacheLines_->tagOf(queueEntry->
-                    request->get_physical_address()));
+						  request->get_physical_address()), sim_cycle);
     }
 
     assert(queueEntry->line);

@@ -63,6 +63,8 @@ W64 total_uops_committed = 0;
 W64 total_insns_committed = 0;
 W64 total_basic_blocks_committed = 0;
 
+W64 total_refresh = 0;
+
 W64 last_printed_status_at_ticks;
 W64 last_printed_status_at_insn;
 W64 last_printed_status_at_cycle;
@@ -1425,6 +1427,8 @@ extern "C" uint8_t ptl_simulate() {
 
 	ptl_logfile << sb, flush;
 	cerr << sb, flush;
+
+	ptl_logfile << "Total number of refreshes = " << total_refresh << endl;
 
 	if (config.dumpcode_filename.set()) {
 		//    byte insnbuf[256];

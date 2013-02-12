@@ -202,6 +202,8 @@ namespace Memory {
 
     void clock();
 
+    W64 refresh();
+
     void reset();
 
 	// return the number of cycle used to flush the caches
@@ -267,6 +269,7 @@ namespace Memory {
 	dynarray<Controller*> allControllers_;
 	dynarray<Interconnect*> allInterconnects_;
 	Controller* memoryController_;
+	Controller* cacheController_;
 
 	// array to indicate if controller or interconnect buffers
 	// are full or not

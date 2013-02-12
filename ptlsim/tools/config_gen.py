@@ -154,7 +154,7 @@ typedef CacheLines<%s, %s, %s, %s, %s, %s, %s, %s, %s> %sCacheLines;
 
 cache_case_stmt = '''
         case %s:
-            return new %s(%s_READ_PORTS, %s_WRITE_PORTS);
+            return new %s(%s_READ_PORTS, %s_WRITE_PORTS, %s_REFRESH_MODE);
 '''
 
 cache_line_func = '''
@@ -682,6 +682,9 @@ def generate_cache_logic(config, options):
         of.write("#include <memoryRequest.h>\n")
         of.write("#include <cacheLines.h>\n")
         of.write("\nnamespace Memory {\n\n")
+        # Enumerate the refresh modes
+        of.write("#define %s %d\n" %("NO_REFRESH", 2))
+        of.write("\n")
         typedefs = {}
         for cache, cfg in config["cache"].items():
             # First write all params
@@ -720,7 +723,7 @@ def generate_cache_logic(config, options):
         of.write("\tswitch(cache_type) {\n")
         for cache in config["cache"].keys():
             of.write(cache_case_stmt % (cache.upper(),
-                typedefs[cache], cache.upper(), cache.upper()))
+                typedefs[cache], cache.upper(), cache.upper(), cache.upper()))
         of.write("\t\tdefault: assert(0);\n\t}\n")
         of.write("}\n")
         of.write("};\n")

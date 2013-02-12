@@ -256,6 +256,9 @@ int BaseMachine::run(PTLsimConfig& config)
             backup_and_reopen_logfile();
 
         memoryHierarchyPtr->clock();
+
+	total_refresh += memoryHierarchyPtr->refresh();
+
         clock_qemu_io_events();
 
 		foreach (i, coremodel.per_cycle_signals.size()) {

@@ -29,6 +29,7 @@
 #define CACHE_LINES_H
 
 #include <logic.h>
+#include <queue>
 
 namespace Memory {
 
@@ -39,10 +40,15 @@ namespace Memory {
          * coherence state */
         W8 state;
 
-        void init(W64 tag_t) {
+      int lineRefreshCounter;
+      W64 lineLastAccess;
+      int lineRetentionTime;
+
+      void init(W64 tag_t, W64 lineLastAccess_t) {
             tag = tag_t;
             if (tag == (W64)-1) state = 0;
-        }
+	    lineLastAccess = lineLastAccess_t;
+      }
 
         void reset() {
             tag = -1;
@@ -85,6 +91,7 @@ namespace Memory {
             virtual int invalidate(MemoryRequest *request)=0;
             virtual bool get_port(MemoryRequest *request)=0;
             virtual void print(ostream& os) const =0;
+      virtual W64 refresh()=0;
             virtual int get_line_bits() const=0;
             virtual int get_access_latency() const=0;
             virtual int get_write_latency() const=0;
@@ -108,6 +115,8 @@ namespace Memory {
             int readPorts_[BANKS];
             int writePorts_[BANKS];
             W64 lastAccessCycle_[BANKS];
+	    int refreshMode_;
+	    std::queue<int> refreshPendingQueue_;
 
         public:
             typedef AssociativeArray<W64, CacheLine, SET_COUNT,
@@ -116,7 +125,7 @@ namespace Memory {
                     NullAssociativeArrayStatisticsCollector<W64,
                     CacheLine> > Set;
 
-            CacheLines(int readPorts, int writePorts);
+            CacheLines(int readPorts, int writePorts, int refreshMode);
             void init();
             W64 tagOf(W64 address);
             int latency() const { return LATENCY; };
@@ -129,6 +138,7 @@ namespace Memory {
             int invalidate(MemoryRequest *request);
             bool get_port(MemoryRequest *request);
             void print(ostream& os) const;
+	    W64 refresh();
 
 			/**
 			 * @brief Get Cache Size
@@ -211,7 +221,7 @@ namespace Memory {
         }
 
     template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY, int WRITE_LATENCY, int TAG_LATENCY, int CYCLE_TIME, int TREF, int BANKS>
-      CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY, WRITE_LATENCY, TAG_LATENCY, CYCLE_TIME, TREF, BANKS>::CacheLines(int readPorts, int writePorts)
+      CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY, WRITE_LATENCY, TAG_LATENCY, CYCLE_TIME, TREF, BANKS>::CacheLines(int readPorts, int writePorts, int refreshMode):refreshMode_(refreshMode)
     {
 	for (int i = 0; i < BANKS; i++) {
 	  readPorts_[i] = readPorts;
@@ -228,7 +238,7 @@ namespace Memory {
             foreach(i, SET_COUNT) {
                 Set &set = base_t::sets[i];
                 foreach(j, WAY_COUNT) {
-                    set.data[j].init(-1);
+		  set.data[j].init(-1, sim_cycle);
                 }
             }
         }
@@ -271,21 +281,43 @@ namespace Memory {
         {
             bool rc = false;
 
-	    // FIXME: fix BANK ID
-            if(lastAccessCycle_[0] + CYCLE_TIME < sim_cycle) {
-                lastAccessCycle_[0] = sim_cycle;
-                writePortUsed_[0] = 0;
-                readPortUsed_[0] = 0;
-            }
+	    // TODO: uncomment these variables later (not it is showing warnings because they are not used)
+	    /* double unavailability = 0; */
+	    /* int GRANULARITY = 1000; */
+	    /* int refresh_point; // refresh point = granularity * (1 - unavailability); */
+	    /* int refresh_cycle; // refresh_cycle = sim_cycle % granularity - refresh_point; */
+
+	    /* // cache is partioned into banks by sets (not ways) */
+	    /* int increment; // for computing setID */
+	    /* int setID; */
+	    W64 accessAddrIndex = bits(request->get_physical_address(), log2(LINE_SIZE), log2(SET_COUNT));
+	    int accessBankID = accessAddrIndex * BANKS / SET_COUNT;
+	    /* W64 refreshAddrIndex; */
+	    /* int refreshBankID; */
+	    /* int subArrayID; */
+	    /* int SUB_ARRAY_COUNT = 1024; */
+
+	    // update cache ports
+	    // NO_REFRESH
+	    if (refreshMode_ == 2) {
+	      if (lastAccessCycle_[accessBankID] + CYCLE_TIME <= sim_cycle) {
+		lastAccessCycle_[accessBankID] = sim_cycle;
+		writePortUsed_[accessBankID] = 0;
+		readPortUsed_[accessBankID] = 0;
+	      }
+	    }
+	    else {
+	      assert(0);
+	    }
 
             switch(request->get_type()) {
                 case MEMORY_OP_READ:
-                    rc = (readPortUsed_[0] < readPorts_[0]) ? ++readPortUsed_[0] : 0;
+                    rc = (readPortUsed_[accessBankID] < readPorts_[accessBankID]) ? ++readPortUsed_[accessBankID] : 0;
                     break;
                 case MEMORY_OP_WRITE:
                 case MEMORY_OP_UPDATE:
                 case MEMORY_OP_EVICT:
-                    rc = (writePortUsed_[0] < writePorts_[0]) ? ++writePortUsed_[0] : 0;
+                    rc = (writePortUsed_[accessBankID] < writePorts_[accessBankID]) ? ++writePortUsed_[accessBankID] : 0;
                     break;
                 default:
                     memdebug("Unknown type of memory request: " <<
@@ -304,6 +336,61 @@ namespace Memory {
                     os << set.data[j];
                 }
             }
+        }
+
+    template <int SET_COUNT, int WAY_COUNT, int LINE_SIZE, int LATENCY, int WRITE_LATENCY, int TAG_LATENCY, int CYCLE_TIME, int TREF, int BANKS>
+      W64 CacheLines<SET_COUNT, WAY_COUNT, LINE_SIZE, LATENCY, WRITE_LATENCY, TAG_LATENCY, CYCLE_TIME, TREF, BANKS>::refresh()
+        {
+	  double unavailability = 0;
+	  int GRANULARITY = 1000;
+	  int refresh_point;
+	  int refresh_cycle;
+	  int increment;
+	  int setID;
+	  int subArrayID;
+	  int SUB_ARRAY_COUNT = 1024;
+	  int SET_PER_SUBARRAY = SET_COUNT / SUB_ARRAY_COUNT;
+
+	  W64 refresh_count = 0; // number of refresh operations
+
+	  // NO_REFRESH (SRAM or STT-RAM)
+	  if (TREF == 0) {
+	    if (refreshMode_ == 2) {
+	      refresh_count = 0;
+	    }
+	  }
+	  // NO_REFRESH (eDRAM)
+	  else {
+	    if (refreshMode_ == 2) {
+	      unavailability = (double) SUB_ARRAY_COUNT / TREF;
+	      refresh_point = GRANULARITY * (1 - unavailability);
+	      refresh_cycle = sim_cycle % GRANULARITY - refresh_point;
+
+	      // which subarray to refresh
+	      increment = GRANULARITY - refresh_point;
+	      subArrayID = ((sim_cycle / GRANULARITY) * increment + refresh_cycle) % SUB_ARRAY_COUNT;
+
+	      foreach (i, SET_PER_SUBARRAY) {
+		setID = subArrayID * SET_PER_SUBARRAY + i;
+		Set &set = base_t::sets[setID];
+
+		switch (refreshMode_) {
+		case 2: // NO_REFRESH (eDRAM)
+		  if (TREF > 0) {
+		    foreach (j, WAY_COUNT) {
+		      if (set.data[j].lineRefreshCounter == 0) 
+			set.data[j].state = 0; // line becomes invalid
+		      else
+			set.data[j].lineRefreshCounter -= 1;
+		    }
+		    break;
+		  }
+		} // switch (refreshMode_)
+	      } // foreach (i, SET_PER_SUBARRAY) {
+	    } // if (refreshMode_ == X)
+	  } // else (eDRAM)
+
+	  return refresh_count;
         }
 
 };

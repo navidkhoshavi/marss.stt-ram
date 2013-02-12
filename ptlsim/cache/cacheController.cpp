@@ -164,6 +164,11 @@ void CacheController::print(ostream& os) const
 	os << "---End Cache-Controller : " << get_name() << endl;
 }
 
+W64 CacheController::refresh()
+{
+  return cacheLines_->refresh();
+}
+
 bool CacheController::handle_interconnect_cb(void *arg)
 {
 	Message *msg = (Message*)arg;
@@ -506,7 +511,12 @@ bool CacheController::cache_insert_cb(void *arg)
 
         line->state = LINE_VALID;
         line->init(cacheLines_->tagOf(queueEntry->request->
-                    get_physical_address()));
+				      get_physical_address()), sim_cycle);
+
+	// NO_REFRESH (eDRAM)
+	if (cacheRefreshMode_ == 2) {
+	  line->lineRefreshCounter = line->lineRetentionTime;
+	}
 
 		queueEntry->eventFlags[CACHE_INSERT_COMPLETE_EVENT]++;
 		marss_add_event(&cacheInsertComplete_,
@@ -557,6 +567,11 @@ bool CacheController::cache_access_cb(void *arg)
 		Signal *signal = NULL;
 		int delay;
 		if(hit) {
+		  // NO_REFRESH (eDRAM)
+		  if (cacheRefreshMode_ == 2) {
+		    line->lineRefreshCounter = line->lineRetentionTime;
+		  }
+
 			if(type == MEMORY_OP_READ ||
 					type == MEMORY_OP_WRITE) {
 				signal = &cacheHit_;

@@ -47,6 +47,9 @@
 
 #include <yaml/yaml.h>
 
+#include <cacheLines.h>
+#include <cacheController.h>
+
 using namespace Memory;
 
 MemoryHierarchy::MemoryHierarchy(BaseMachine& machine) :
@@ -119,6 +122,22 @@ void MemoryHierarchy::simulation_done()
 	((MemoryController*)memoryController_)->mem->printStats(true);	
 }
 #endif
+
+CacheController *L3Controller_;
+
+W64 MemoryHierarchy::refresh()
+{
+  if unlikely (sim_cycle == 0) {
+    foreach (i, allControllers_.count()) {
+      if (strstr(allControllers_[i]->get_name(), "L3_0")) {
+	cacheController_ = allControllers_[i];
+	L3Controller_ = (CacheController*) cacheController_;
+      }
+    }
+  }
+
+  return L3Controller_->refresh();
+}
 
 void MemoryHierarchy::reset()
 {

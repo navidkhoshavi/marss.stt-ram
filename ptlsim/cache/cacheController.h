@@ -163,6 +163,9 @@ class CacheController : public Controller
 		// Cache Retention time
 		int cacheTRef_;
 
+		// Which Refresh Mode?
+		int cacheRefreshMode_;
+
 		// A Queue conatining pending requests for this cache
 		FixStateList<CacheQueueEntry, 128> pendingRequests_;
 
@@ -254,6 +257,8 @@ class CacheController : public Controller
 		}
 
 		void print(ostream& os) const;
+
+		W64 refresh();
 
 		bool is_full(bool fromInterconnect = false, MemoryRequest *req = NULL) const {
 			if(pendingRequests_.count() >= (
