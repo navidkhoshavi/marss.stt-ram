@@ -684,6 +684,7 @@ def generate_cache_logic(config, options):
         of.write("\nnamespace Memory {\n\n")
         # Enumerate the refresh modes
         of.write("#define %s %d\n" %("NO_REFRESH", 2))
+        of.write("#define %s %d\n" %("PERIODIC", 3))
         of.write("\n")
         typedefs = {}
         for cache, cfg in config["cache"].items():

@@ -282,20 +282,20 @@ namespace Memory {
             bool rc = false;
 
 	    // TODO: uncomment these variables later (not it is showing warnings because they are not used)
-	    /* double unavailability = 0; */
-	    /* int GRANULARITY = 1000; */
-	    /* int refresh_point; // refresh point = granularity * (1 - unavailability); */
-	    /* int refresh_cycle; // refresh_cycle = sim_cycle % granularity - refresh_point; */
+	    double unavailability = 0;
+	    int GRANULARITY = 1000;
+	    int refresh_point; // refresh point = granularity * (1 - unavailability);
+	    int refresh_cycle; // refresh_cycle = sim_cycle % granularity - refresh_point;
 
-	    /* // cache is partioned into banks by sets (not ways) */
-	    /* int increment; // for computing setID */
-	    /* int setID; */
+	    // cache is partioned into banks by sets (not ways)
+	    int increment; // for computing setID
+	    int setID;
 	    W64 accessAddrIndex = bits(request->get_physical_address(), log2(LINE_SIZE), log2(SET_COUNT));
 	    int accessBankID = accessAddrIndex * BANKS / SET_COUNT;
-	    /* W64 refreshAddrIndex; */
-	    /* int refreshBankID; */
-	    /* int subArrayID; */
-	    /* int SUB_ARRAY_COUNT = 1024; */
+	    W64 refreshAddrIndex;
+	    int refreshBankID;
+	    int subArrayID;
+	    int SUB_ARRAY_COUNT = 1024;
 
 	    // update cache ports
 	    // NO_REFRESH
@@ -306,6 +306,40 @@ namespace Memory {
 		readPortUsed_[accessBankID] = 0;
 	      }
 	    }
+	    // PERIODIC
+	    else if (refreshMode_ == 3) {
+	      // get refresh point for periodic refresh
+	      unavailability = (double) SUB_ARRAY_COUNT / TREF;
+	      assert(unavailability < 1);
+	      refresh_point = GRANULARITY * (1 - unavailability);
+
+	      if (sim_cycle % GRANULARITY <= refresh_point) { // not refreshing
+		if (lastAccessCycle_[accessBankID] + CYCLE_TIME <= sim_cycle) {
+		  lastAccessCycle_[accessBankID] = sim_cycle;
+		  writePortUsed_[accessBankID] = 0;
+		  readPortUsed_[accessBankID] = 0;
+		}
+	      }
+	      else { // refreshing
+		// get the ID of the bank tha is currently refreshing
+		refresh_cycle = sim_cycle % GRANULARITY - refresh_point;
+		increment = GRANULARITY - refresh_point;
+		subArrayID = ((sim_cycle / GRANULARITY) * increment + refresh_cycle) % SUB_ARRAY_COUNT;
+		refreshBankID = subArrayID * BANKS / SUB_ARRAY_COUNT;
+
+		lastAccessCycle_[refreshBankID] = sim_cycle;
+		writePortUsed_[refreshBankID] = 1;
+		readPortUsed_[refreshBankID] = 1;
+
+		if (accessBankID != refreshBankID) {
+		  if (lastAccessCycle_[accessBankID] + CYCLE_TIME <= sim_cycle) {
+		    lastAccessCycle_[accessBankID] = sim_cycle;
+		    writePortUsed_[accessBankID] = 0;
+		    readPortUsed_[accessBankID] = 0;
+		  }
+		}
+	      }
+	    } // else if (refreshMode_ == X)
 	    else {
 	      assert(0);
 	    }
@@ -353,40 +387,55 @@ namespace Memory {
 
 	  W64 refresh_count = 0; // number of refresh operations
 
-	  // NO_REFRESH (SRAM or STT-RAM)
+	  // SRAM or STT-RAM
 	  if (TREF == 0) {
-	    if (refreshMode_ == 2) {
+	    if (refreshMode_ == 2) { // NO_REFRESH
 	      refresh_count = 0;
 	    }
 	  }
-	  // NO_REFRESH (eDRAM)
+	  // eDRAM
 	  else {
-	    if (refreshMode_ == 2) {
+	    if (refreshMode_ == 2 || // NO_REFRESH
+		refreshMode_ == 3) { // PERIODIC
 	      unavailability = (double) SUB_ARRAY_COUNT / TREF;
 	      refresh_point = GRANULARITY * (1 - unavailability);
 	      refresh_cycle = sim_cycle % GRANULARITY - refresh_point;
 
-	      // which subarray to refresh
-	      increment = GRANULARITY - refresh_point;
-	      subArrayID = ((sim_cycle / GRANULARITY) * increment + refresh_cycle) % SUB_ARRAY_COUNT;
+	      // refresh region
+	      if (sim_cycle % GRANULARITY >= refresh_point) {
+		// which subarray to refresh
+		increment = GRANULARITY - refresh_point;
+		subArrayID = ((sim_cycle / GRANULARITY) * increment + refresh_cycle) % SUB_ARRAY_COUNT;
 
-	      foreach (i, SET_PER_SUBARRAY) {
-		setID = subArrayID * SET_PER_SUBARRAY + i;
-		Set &set = base_t::sets[setID];
+		foreach (i, SET_PER_SUBARRAY) {
+		  setID = subArrayID * SET_PER_SUBARRAY + i;
+		  Set &set = base_t::sets[setID];
 
-		switch (refreshMode_) {
-		case 2: // NO_REFRESH (eDRAM)
-		  if (TREF > 0) {
+		  switch (refreshMode_) {
+		  case 2: // NO_REFRESH
 		    foreach (j, WAY_COUNT) {
-		      if (set.data[j].lineRefreshCounter == 0) 
+		      if (set.data[j].lineRefreshCounter == 0) { 
 			set.data[j].state = 0; // line becomes invalid
-		      else
+		      }
+		      else {
 			set.data[j].lineRefreshCounter -= 1;
+		      }
 		    }
 		    break;
-		  }
-		} // switch (refreshMode_)
-	      } // foreach (i, SET_PER_SUBARRAY) {
+		  case 3: // PERIODIC
+		    foreach (j, WAY_COUNT) {
+		      if (set.data[j].lineRefreshCounter == 0) {
+			refresh_count += 1;
+			set.data[j].lineRefreshCounter = set.data[j].lineRetentionTime;
+		      }
+		      else {
+			set.data[j].lineRefreshCounter -= 1;
+		      }
+		    }
+		    break;
+		  } // switch (refreshMode_)
+		} // foreach (i, SET_PER_SUBARRAY) {
+	      } // if (sim_cycle % granularity >= refresh_point) {
 	    } // if (refreshMode_ == X)
 	  } // else (eDRAM)
 
