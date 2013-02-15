@@ -281,7 +281,6 @@ namespace Memory {
         {
             bool rc = false;
 
-	    // TODO: uncomment these variables later (not it is showing warnings because they are not used)
 	    double unavailability = 0;
 	    int GRANULARITY = 1000;
 	    int refresh_point; // refresh point = granularity * (1 - unavailability);
@@ -298,16 +297,15 @@ namespace Memory {
 	    int SUB_ARRAY_COUNT = 1024;
 
 	    // update cache ports
-	    // NO_REFRESH
-	    if (refreshMode_ == 2) {
+	    if (refreshMode_ == 2) { // NO_REFRESH
 	      if (lastAccessCycle_[accessBankID] + CYCLE_TIME <= sim_cycle) {
 		lastAccessCycle_[accessBankID] = sim_cycle;
 		writePortUsed_[accessBankID] = 0;
 		readPortUsed_[accessBankID] = 0;
 	      }
 	    }
-	    // PERIODIC
-	    else if (refreshMode_ == 3) {
+	    else if (refreshMode_ == 3 || // PERIODIC
+		     refreshMode_ == 4) { // EXTEND
 	      // get refresh point for periodic refresh
 	      unavailability = (double) SUB_ARRAY_COUNT / TREF;
 	      assert(unavailability < 1);
@@ -321,7 +319,7 @@ namespace Memory {
 		}
 	      }
 	      else { // refreshing
-		// get the ID of the bank tha is currently refreshing
+		// get the ID of the bank that is currently refreshing
 		refresh_cycle = sim_cycle % GRANULARITY - refresh_point;
 		increment = GRANULARITY - refresh_point;
 		subArrayID = ((sim_cycle / GRANULARITY) * increment + refresh_cycle) % SUB_ARRAY_COUNT;
@@ -396,7 +394,8 @@ namespace Memory {
 	  // eDRAM
 	  else {
 	    if (refreshMode_ == 2 || // NO_REFRESH
-		refreshMode_ == 3) { // PERIODIC
+		refreshMode_ == 3 || // PERIODIC
+		refreshMode_ == 4) { // EXTEND
 	      unavailability = (double) SUB_ARRAY_COUNT / TREF;
 	      refresh_point = GRANULARITY * (1 - unavailability);
 	      refresh_cycle = sim_cycle % GRANULARITY - refresh_point;
@@ -423,6 +422,18 @@ namespace Memory {
 		    }
 		    break;
 		  case 3: // PERIODIC
+		    foreach (j, WAY_COUNT) {
+		      if (set.data[j].lineRefreshCounter == 0) {
+			refresh_count += 1;
+			set.data[j].lineRefreshCounter = set.data[j].lineRetentionTime;
+		      }
+		      else {
+			set.data[j].lineRefreshCounter -= 1;
+		      }
+		    }
+		    break;
+		  case 4: // EXTEND
+		    // the extend scheme is implemented in cacheController.cpp
 		    foreach (j, WAY_COUNT) {
 		      if (set.data[j].lineRefreshCounter == 0) {
 			refresh_count += 1;

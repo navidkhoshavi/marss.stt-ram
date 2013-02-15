@@ -513,8 +513,8 @@ bool CacheController::cache_insert_cb(void *arg)
         line->init(cacheLines_->tagOf(queueEntry->request->
 				      get_physical_address()), sim_cycle);
 
-	// NO_REFRESH (eDRAM)
-	if (cacheRefreshMode_ == 2) {
+	if (cacheRefreshMode_ == 2 || // NO_REFRESH (eDRAM)
+	    cacheRefreshMode_ == 4) { // EXTEND
 	  line->lineRefreshCounter = line->lineRetentionTime;
 	}
 
@@ -567,8 +567,8 @@ bool CacheController::cache_access_cb(void *arg)
 		Signal *signal = NULL;
 		int delay;
 		if(hit) {
-		  // NO_REFRESH (eDRAM)
-		  if (cacheRefreshMode_ == 2) {
+		  if (cacheRefreshMode_ == 2 || // NO_REFRESH (eDRAM)
+		      cacheRefreshMode_ == 4) { // EXTEND
 		    line->lineRefreshCounter = line->lineRetentionTime;
 		  }
 
