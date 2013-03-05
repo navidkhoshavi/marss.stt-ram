@@ -686,6 +686,7 @@ def generate_cache_logic(config, options):
         of.write("#define %s %d\n" %("NO_REFRESH", 2))
         of.write("#define %s %d\n" %("PERIODIC", 3))
         of.write("#define %s %d\n" %("EXTEND", 4))
+        of.write("#define %s %d\n" %("DYNAMIC_SKIP", 5))
         of.write("\n")
         typedefs = {}
         for cache, cfg in config["cache"].items():

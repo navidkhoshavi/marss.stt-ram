@@ -504,7 +504,8 @@ bool CacheController::cache_insert_cb(void *arg)
 		CacheLine *line = cacheLines_->insert(queueEntry->request,
 				oldTag);
 		if(oldTag != InvalidTag<W64>::INVALID && oldTag != (W64)-1) {
-            if(wt_disabled_ && line->state == LINE_MODIFIED) {
+		  // writeback if line is modified or disabled
+		  if(wt_disabled_ && (line->state == LINE_MODIFIED || line->predictState == 2)) {
                 send_update_message(queueEntry, oldTag);
 			}
 		}
@@ -558,6 +559,10 @@ bool CacheController::cache_access_cb(void *arg)
 		CacheLine *line = cacheLines_->probe(queueEntry->request);
 		bool hit = (line == NULL) ? false : line->state;
 
+		int predictState;
+		if (line != NULL)
+		  predictState = line->predictState;
+
 		// Testing 100 % L2 Hit
         //		if(type_ == L2_CACHE)
         //			hit = true;
@@ -566,10 +571,24 @@ bool CacheController::cache_access_cb(void *arg)
 		bool kernel_req = queueEntry->request->is_kernel();
 		Signal *signal = NULL;
 		int delay;
-		if(hit) {
+		if(hit && predictState != 2) { // line is not disabled
+		  line->lineLastAccess = sim_cycle;
+
 		  if (cacheRefreshMode_ == 2 || // NO_REFRESH (eDRAM)
 		      cacheRefreshMode_ == 4) { // EXTEND
 		    line->lineRefreshCounter = line->lineRetentionTime;
+		  }
+		  else if (cacheRefreshMode_ == 5) { // DYNAMIC_SKIP
+		    switch (line->predictState) {
+		    case 0: line->predictState = 0; break;
+		    case 1: line->predictState = 0; break;
+		    case 2: line->predictState = 2; break; // never happens
+		    case 3: line->predictState = 0; break;
+		    case 4: line->predictState = 0; break;
+		    case 5: line->predictState = 0; break;
+		    case 6: line->predictState = 0; break;
+		    case 7: line->predictState = 0; break;
+		    }
 		  }
 
 			if(type == MEMORY_OP_READ ||
@@ -633,6 +652,15 @@ bool CacheController::cache_access_cb(void *arg)
                 assert(0);
             }
 		} else { // Cache Miss
+		  if (cacheRefreshMode_ == 5) { // DYNAMIC_SKIP
+		    if (predictState == 2) { // false prediction
+		      if (line->predictStateIndicator < 6) {
+			// predictStateIndicator == 6 -> disable predictor
+			line->predictStateIndicator += 1;
+		      }
+		    }
+		  }
+		  
 			if(type == MEMORY_OP_READ ||
 					type == MEMORY_OP_WRITE) {
 				signal = &cacheMiss_;

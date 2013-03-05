@@ -247,7 +247,7 @@ void ConfigurationParser<PTLsimConfig>::reset() {
   simpoint_chk_name = "simpoint";
 #ifdef DRAMSIM
   // DRAMSim2 options
-  dramsim_device_ini_file = "ini/DDR3_micron_8M_8B_x16_sg15.ini";
+  dramsim_device_ini_file = "ini/DDR3_micron_32M_8B_x8_sg15.ini";
   dramsim_system_ini_file = "system.ini";
   dramsim_pwd = "../DRAMSim2";
   dramsim_results_dir_name = "MARSS";

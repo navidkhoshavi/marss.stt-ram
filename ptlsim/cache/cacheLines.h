@@ -41,18 +41,24 @@ namespace Memory {
         W8 state;
 
       int lineRefreshCounter;
+      int lineDecayInterval;
       W64 lineLastAccess;
       int lineRetentionTime;
+      int predictState;
+      int predictStateIndicator;
 
       void init(W64 tag_t, W64 lineLastAccess_t) {
             tag = tag_t;
             if (tag == (W64)-1) state = 0;
 	    lineLastAccess = lineLastAccess_t;
+	    predictState = 0;
       }
 
         void reset() {
             tag = -1;
             state = 0;
+	    predictStateIndicator = 0;
+	    predictState = 0;
         }
 
         void invalidate() { reset(); }
@@ -305,7 +311,9 @@ namespace Memory {
 	      }
 	    }
 	    else if (refreshMode_ == 3 || // PERIODIC
-		     refreshMode_ == 4) { // EXTEND
+		     refreshMode_ == 4 || // EXTEND
+		     refreshMode_ == 5) { // DYNAMIC_SKIP
+	      
 	      // get refresh point for periodic refresh
 	      unavailability = (double) SUB_ARRAY_COUNT / TREF;
 	      assert(unavailability < 1);
@@ -385,6 +393,8 @@ namespace Memory {
 
 	  W64 refresh_count = 0; // number of refresh operations
 
+	  int max = 0; // for predictStateIndicator
+
 	  // SRAM or STT-RAM
 	  if (TREF == 0) {
 	    if (refreshMode_ == 2) { // NO_REFRESH
@@ -395,7 +405,8 @@ namespace Memory {
 	  else {
 	    if (refreshMode_ == 2 || // NO_REFRESH
 		refreshMode_ == 3 || // PERIODIC
-		refreshMode_ == 4) { // EXTEND
+		refreshMode_ == 4 || // EXTEND
+		refreshMode_ == 5) { // DYNAMIC_SKIP
 	      unavailability = (double) SUB_ARRAY_COUNT / TREF;
 	      refresh_point = GRANULARITY * (1 - unavailability);
 	      refresh_cycle = sim_cycle % GRANULARITY - refresh_point;
@@ -443,6 +454,93 @@ namespace Memory {
 			set.data[j].lineRefreshCounter -= 1;
 		      }
 		    }
+		    break;
+		  case 5: // DYNAMIC_SKIP
+		    // logically, predictStateIndicator is a per-setr indicator
+		    // it uses 3 bits (0~6), where 6 means the predictors associate to the set are off
+		    foreach (j, WAY_COUNT)
+		      if (set.data[j].predictStateIndicator > max)
+			max = set.data[j].predictStateIndicator;
+
+		    foreach (j, WAY_COUNT)
+		      set.data[j].predictStateIndicator = max;
+
+		    // predictState transistions
+		    foreach (j, WAY_COUNT) {
+		      // valid = true && predictor = on
+		      if (set.data[j].state != 0 && set.data[j].predictStateIndicator != 6) {
+			if (set.data[j].lineRefreshCounter == 0)
+			  set.data[j].lineDecayInterval += 1;
+
+			if (set.data[j].lineDecayInterval == 256) { // let decay interval = 256 * retention time
+			  switch (set.data[j].predictState) {
+			  case 0: // live state
+			    switch (set.data[0].predictStateIndicator) {
+			    case 0: // false prediction = 0
+			      set.data[j].predictState = 1;
+			      break;
+			    case 1: // false prediction = 1
+			      set.data[j].predictState = 3;
+			      break;
+			    case 2: // false prediction = 2
+			      set.data[j].predictState = 4;
+			      break;
+			    case 3: // false prediction = 3
+			      set.data[j].predictState = 5;
+			      break;
+			    case 4: // false prediction = 4
+			      set.data[j].predictState = 6;
+			      break;
+			    case 5: // false prediction = 5
+			      set.data[j].predictState = 7;
+			      break;
+			    }
+			    break;
+			  case 1: // dead
+			    set.data[j].predictState = 2;
+			    break;
+			  case 2: // disable
+			    // do nothing
+			    break;
+			  case 3: // intermediate state
+			    set.data[j].predictState = 1;
+			    break;
+			  case 4: // intermediate state
+			    set.data[j].predictState = 3;
+			    break;
+			  case 5: // intermidiate state
+			    set.data[j].predictState = 4;
+			    break;
+			  case 6: // intermediate state
+			    set.data[j].predictState = 5;
+			    break;
+			  case 7: // intermediate state
+			    set.data[j].predictState = 6;
+			    break;
+			  } // switch (set.data[j].predictState)
+			  
+			  set.data[j].lineDecayInterval = 0; // reset lineDecayInterval
+			} // if (set.data[j].lineDecayInterval == 256)
+		      } // if (set.data[j].state != 0 && set.data[j].predictStateIndicator != 6)
+		      else {
+			// if predictStateIndicator is off, line is always live
+			set.data[j].predictState = 0;
+		      }
+		    } // predictState transistions
+
+		    // manage refresh
+		    foreach (j, WAY_COUNT) {
+		      // only refresh if line is valid and is not disabled
+		      if (set.data[j].state != 0 && set.data[j].predictState != 2) {
+			if (set.data[j].lineRefreshCounter == 0) {
+			  refresh_count += 1;
+			  set.data[j].lineRefreshCounter = set.data[j].lineRetentionTime;
+			}
+			else {
+			  set.data[j].lineRefreshCounter -= 1;
+			}
+		      }
+		    } // manage refresh
 		    break;
 		  } // switch (refreshMode_)
 		} // foreach (i, SET_PER_SUBARRAY) {
