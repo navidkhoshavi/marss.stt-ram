@@ -249,6 +249,10 @@ bool CacheController::handle_interconnect_cb(void *arg)
 			}
 		} else {
 			cache_access_cb(queueEntry);
+#ifdef LLC_TRACE
+			W64 lineAddress = get_line_address(msg->request);
+			llc_tracefile << sim_cycle << " " << lineAddress << endl; 
+#endif
 		}
 
 		memdebug("Cache: " << get_name() << " added queue entry: " <<
