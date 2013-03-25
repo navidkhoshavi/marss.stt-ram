@@ -45,10 +45,10 @@ output_dir = options.output_dir + "/"
 cwd = os.getcwd()
 qemu_bin = '%s/qemu/qemu-system-x86_64' % cwd
 disk = sys.argv[1]
-qemu_img = ['%s/../parsec_roi/linux-%s.qcow2' %(cwd, disk)]
+qemu_img = ['%s/../../disk/linux-%s.qcow2' %(cwd, disk)]
 vm_memory = 8192
 qemu_cmd = ''
-vnc_counter = 100
+vnc_counter = 127
 
 num_threads = len(qemu_img)
 
@@ -90,15 +90,13 @@ checkpoint_iter = iter(check_list)
 
 # Simulation Command
 sim_file_generic = '''
-#-corefreq 2000000000
-#-corefreq 3333333333
--corefreq 4000000000
+-corefreq 2000000000
 -bench-name %s
 -machine shared_l3
 -logfile %s.log
 -stats %s.stats
 -run
--stopinsns 2400m
+-stopinsns 4000m
 -kill-after-run
 '''
 
@@ -224,6 +222,7 @@ class RunSim(Thread):
             self.add_to_cmd('-drive file=%s,cache=unsafe' % self.qemu_img)
             self.add_to_cmd('-simconfig %s' % sim_file_cmd_name)
             self.add_to_cmd('-loadvm %s' % checkpoint)
+            self.add_to_cmd('-snapshot')
 
             print("Starting Checkpoint: %s" % checkpoint)
             print("Command: %s" % self.qemu_cmd)
