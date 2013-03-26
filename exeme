@@ -1,27 +1,27 @@
 #!/bin/bash
 
-echo -e "Subject: $2\n`pwd` Start" | ssmtp mutien.chang@gmail.com
+echo -e "Subject: $2_$3_$4_$5_$6_$7_$8_$9_${10}\n`pwd` Start" | ssmtp mutien.chang@gmail.com
 ./run_bench.py $1 $2
 ./util/mstats.py -y --yaml-out $2.stats > $2.txt
 
 ./my_util/perf.py $2.log $2.txt
-./my_util/cache_power.py $3
+./my_util/cache_power.py $3 $4 $5 $6 $7 $8 $9 ${10}
 ./my_util/dramsim.py
 ./my_util/dram_power.py
 
-dir=$2_$3
+dir=$2_$3_$4_$5_$6_$7_$8_$9_${10}
 if [ -e $dir ]
 then
-    echo "Warning:" $2_$3 "already exists! Store results in temp."
+    echo "Warning:" $dir "already exists! Store results in temp."
     mkdir temp
     mv $2.* temp
     mv *.log temp
     mv *.dat temp
 else
-    mkdir $2_$3
-    mv $2.* $2_$3
-    mv *.log $2_$3
-    mv *.dat $2_$3
+    mkdir $dir
+    mv $2.* $dir
+    mv *.log $dir
+    mv *.dat $dir
 fi
 
-echo -e "Subject: $2\n`pwd` Finish" | ssmtp mutien.chang@gmail.com
+echo -e "Subject: $2_$3_$4_$5_$6_$7_$8_$9_${10}\n`pwd` Finish" | ssmtp mutien.chang@gmail.com
