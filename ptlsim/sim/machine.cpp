@@ -257,7 +257,9 @@ int BaseMachine::run(PTLsimConfig& config)
 
         memoryHierarchyPtr->clock();
 
+	#ifdef L3
 	total_refresh += memoryHierarchyPtr->refresh();
+	#endif
 
         clock_qemu_io_events();
 

@@ -123,6 +123,7 @@ void MemoryHierarchy::simulation_done()
 }
 #endif
 
+#ifdef L3
 CacheController *L3Controller_;
 
 W64 MemoryHierarchy::refresh()
@@ -138,6 +139,7 @@ W64 MemoryHierarchy::refresh()
 
   return L3Controller_->refresh();
 }
+#endif
 
 void MemoryHierarchy::reset()
 {

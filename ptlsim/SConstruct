@@ -34,6 +34,9 @@ if os.path.isdir(dramsim_path):
 	env['CPPPATH'].append(dramsim_path);
 	env.Append(CCFLAGS = '-DDRAMSIM')
 
+# enable L3 cache
+env.Append(CCFLAGS = '-DL3')
+
 # enable llc_tracefile
 env.Append(CCFLAGS = '-DLLC_TRACE')
 
