@@ -6,7 +6,8 @@ import os
 
 infile1 = sys.argv[1] # ex. blackscholes.log
 infile2 = sys.argv[2] # ex. blackscholes.txt
-
+num_core = sys.argv[3] # ex. 8
+machine = sys.argv[4] # ex. ooo_l3
 
 def system_perf():
     cycle = re.compile("Stopped after ([0-9]+) cycles, ([0-9]+) instructions(.*)")
@@ -98,14 +99,8 @@ fout = open('perf.dat', 'w')
 
 # L1_D performance
 L1_D = []
-L1_D += ["L1_D_0"]
-L1_D += ["L1_D_1"]
-L1_D += ["L1_D_2"]
-L1_D += ["L1_D_3"]
-L1_D += ["L1_D_4"]
-L1_D += ["L1_D_5"]
-L1_D += ["L1_D_6"]
-L1_D += ["L1_D_7"]
+for i in range(int(num_core)):
+    L1_D += ['L1_D_%d' %i]
 
 l1_d_num_read = 0
 l1_d_num_write = 0
@@ -124,14 +119,8 @@ for l1_d in L1_D:
 
 # L1_I performance
 L1_I = []
-L1_I += ["L1_I_0"]
-L1_I += ["L1_I_1"]
-L1_I += ["L1_I_2"]
-L1_I += ["L1_I_3"]
-L1_I += ["L1_I_4"]
-L1_I += ["L1_I_5"]
-L1_I += ["L1_I_6"]
-L1_I += ["L1_I_7"]
+for i in range(int(num_core)):
+    L1_I += ['L1_I_%d' %i]
 
 l1_i_num_read = 0
 l1_i_num_write = 0
@@ -150,14 +139,8 @@ for l1_i in L1_I:
 
 # L2 performance
 L2 = []
-L2 += ["L2_0"]
-L2 += ["L2_1"]
-L2 += ["L2_2"]
-L2 += ["L2_3"]
-L2 += ["L2_4"]
-L2 += ["L2_5"]
-L2 += ["L2_6"]
-L2 += ["L2_7"]
+for i in range(int(num_core)):
+    L2 += ['L2_%d' %i]
 
 l2_num_read = 0
 l2_num_write = 0
@@ -175,19 +158,27 @@ for l2 in L2:
     l2_num_update += num_update
 
 # L3 performance
-(L3_0_num_read,
- L3_0_num_write,
- L3_0_num_update,
- L3_0_miss_ratio,
- L3_0_mpki,
- L3_0_apkc) = cache_perf('L3_0', num_cycle, num_ins)
+if machine == 'ooo_l3' or machine == 'atom_l3':
+    (L3_0_num_read,
+     L3_0_num_write,
+     L3_0_num_update,
+     L3_0_miss_ratio,
+     L3_0_mpki,
+     L3_0_apkc) = cache_perf('L3_0', num_cycle, num_ins)
 
-l3_num_read = L3_0_num_read
-l3_num_write = L3_0_num_write
-l3_num_update = L3_0_num_update
-l3_miss_ratio = L3_0_miss_ratio
-l3_mpki = L3_0_mpki
-l3_apkc = L3_0_apkc
+    l3_num_read = L3_0_num_read
+    l3_num_write = L3_0_num_write
+    l3_num_update = L3_0_num_update
+    l3_miss_ratio = L3_0_miss_ratio
+    l3_mpki = L3_0_mpki
+    l3_apkc = L3_0_apkc
+else:
+    l3_num_read = 0
+    l3_num_write = 0
+    l3_num_update = 0
+    l3_miss_ratio = 0
+    l3_mpki = 0
+    l3_apkc = 0
 
 # print results
 print "IPC=%f MISS_RATIO=%f MPKI=%f APKC=%f" %(ipc,

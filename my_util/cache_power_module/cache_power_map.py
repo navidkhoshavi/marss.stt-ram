@@ -8,7 +8,8 @@ def cache_power_map(mem_type,
                     tech_node,
                     cache_size,
                     implementation,
-                    temperature):
+                    temperature,
+                    machine):
     l1_d_leakage_power = 0 # mW (per bank)
     l1_d_read_energy = 0 # nJ (per read)
     l1_d_write_energy = 0 # nJ (per write)
@@ -66,7 +67,7 @@ def cache_power_map(mem_type,
                                            cache_size,
                                            implementation,
                                            temperature)
-    if mem_type == 'edram':
+    elif mem_type == 'edram':
         (l1_d_leakage_power,
          l1_d_read_energy,
          l1_d_write_energy,
@@ -85,6 +86,15 @@ def cache_power_map(mem_type,
                                           cache_size,
                                           implementation,
                                           temperature)
+
+    # If there is no L3 cache
+    if machine == 'ooo_l2' or machine == 'atom_l2':
+        l3_leakage_power = 0 # mW (per bank)
+        l3_read_energy = 0 # nJ (per read)
+        l3_write_energy = 0 # nJ (per write)
+        l3_tag_energy = 0 # nJ (per tag access)
+        l3_refresh_energy = 0 # nJ (per refresh)
+        l3_overhead_power = 0 # nW (all)
 
     return (l1_d_leakage_power,
             l1_d_read_energy,

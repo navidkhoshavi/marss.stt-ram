@@ -15,6 +15,7 @@ proc_freq = sys.argv[5] # processor frequency (1GHz, 2GHz, 3GHz, 4GHz)
 temperature = sys.argv[6] # temperature
 num_core = int(sys.argv[7]) # number of cores
 num_bank = int(sys.argv[8]) # number of LLC banks
+machine = sys.argv[9] # machine type (ooo_l3, ooo_l2, atom_l3, atom_l2)
 
 def main():
     (num_cycle,
@@ -50,7 +51,8 @@ def main():
                                           tech_node,
                                           cache_size,
                                           implementation,
-                                          temperature)
+                                          temperature,
+                                          machine)
 
     compute_cache_power(num_cycle,
                         l1_d_num_read,

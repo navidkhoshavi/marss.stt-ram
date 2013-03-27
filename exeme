@@ -8,8 +8,8 @@ echo -e "Subject: $dir\n`pwd` Start" | ssmtp mutien.chang@gmail.com
 ./run_bench.py $1 $2 $7 ${11}
 ./util/mstats.py -y --yaml-out $2.stats > $2.txt
 
-./my_util/perf.py $2.log $2.txt
-./my_util/cache_power.py $3 $4 $5 $6 $7 $8 $9 ${10}
+./my_util/perf.py $2.log $2.txt $9 ${11}
+./my_util/cache_power.py $3 $4 $5 $6 $7 $8 $9 ${10} ${11}
 ./my_util/dramsim.py
 ./my_util/dram_power.py
 
