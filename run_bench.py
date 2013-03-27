@@ -52,6 +52,14 @@ vnc_counter = 127
 
 num_threads = len(qemu_img)
 
+corefreq = sys.argv[3]
+if corefreq == '1GHz': corefreq = 1000000000
+elif corefreq == '2GHz': corefreq = 2000000000
+elif corefreq == '3GHz': corefreq = 3333333333
+elif corefreq == '4GHz': corefreq = 4000000000
+
+machine = sys.argv[4]
+
 # If user give argument 'out' then print the output of simulation run
 # to stdout else ignore it
 out_to_stdout = False
@@ -90,9 +98,9 @@ checkpoint_iter = iter(check_list)
 
 # Simulation Command
 sim_file_generic = '''
--corefreq 2000000000
+-corefreq %s
 -bench-name %s
--machine shared_l3
+-machine %s
 -logfile %s.log
 -stats %s.stats
 -run
@@ -201,9 +209,11 @@ class RunSim(Thread):
             if checkpoint == None:
                 break
 
-            sim_file_cmd_name = "/tmp/%s.simconfig" % checkpoint
+            sim_file_cmd_name = "/tmp/%s.simconfig" % self.vnc_counter
             sim_file_cmd = open(sim_file_cmd_name, "w")
-            sim_file_cmd.write(sim_file_generic % (output_dir + checkpoint, 
+            sim_file_cmd.write(sim_file_generic % (corefreq,
+                                                   output_dir + checkpoint, 
+                                                   machine,
                                                    output_dir + checkpoint, 
                                                    checkpoint))
             sim_file_cmd.write("\n")
