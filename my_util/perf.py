@@ -82,8 +82,8 @@ def cache_perf(cache_object, num_cycle, num_ins):
     num_write = num_write_hit
     num_update = num_read_miss + num_write_miss
     miss_ratio = float(num_read_miss + num_write_miss) / (num_read + num_write + num_update)
-    mpki = 10E3 * float(num_read_miss + num_write_miss) / num_ins
-    apkc = 10E3 * float(num_read + num_write + num_update) / num_cycle # num access per k cycle
+    mpki = 1E3 * float(num_read_miss + num_write_miss) / num_ins
+    apkc = 1E3 * float(num_read + num_write + num_update) / num_cycle # num access per k cycle
 
     return num_read, num_write, num_update, miss_ratio, mpki, apkc
 
