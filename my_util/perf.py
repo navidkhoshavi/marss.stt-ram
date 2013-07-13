@@ -33,6 +33,7 @@ def system_perf():
     fin1.close()
 
     ipc = float(num_ins) / num_cycle
+
     return ipc, num_ins, num_cycle, num_refresh
 
 
@@ -78,14 +79,14 @@ def cache_perf(cache_object, num_cycle, num_ins):
                 flag = 0
     fin2.close()
 
-    num_read = num_read_hit
-    num_write = num_write_hit
+    num_read = num_read_hit + num_read_miss
+    num_write = num_write_hit + num_write_miss
     num_update = num_read_miss + num_write_miss
-    miss_ratio = float(num_read_miss + num_write_miss) / (num_read + num_write + num_update)
+    miss_ratio = float(num_read_miss + num_write_miss) / (num_read + num_write)
     mpki = 1E3 * float(num_read_miss + num_write_miss) / num_ins
-    apkc = 1E3 * float(num_read + num_write + num_update) / num_cycle # num access per k cycle
+    apkc = 1E3 * float(num_read + num_write) / num_cycle # num access per kilo cycle
 
-    return num_read, num_write, num_update, miss_ratio, mpki, apkc
+    return num_read, num_read_hit, num_read_miss, num_write, num_write_hit, num_write_miss, num_update, miss_ratio, mpki, apkc
 
 
 # === main ===
@@ -103,18 +104,31 @@ for i in range(int(num_core)):
     L1_D += ['L1_D_%d' %i]
 
 l1_d_num_read = 0
+l1_d_num_read_hit = 0
+l1_d_num_read_miss = 0
 l1_d_num_write = 0
+l1_d_num_write_hit = 0
+l1_d_num_write_miss = 0
 l1_d_num_update = 0
+
 for l1_d in L1_D:
     (num_read,
+     num_read_hit,
+     num_read_miss,
      num_write,
+     num_write_hit,
+     num_write_miss,
      num_update,
      miss_ratio,
      mpki,
      apkc) = cache_perf(l1_d, num_cycle, num_ins)
 
     l1_d_num_read += num_read
+    l1_d_num_read_hit += num_read_hit
+    l1_d_num_read_miss += num_read_miss
     l1_d_num_write += num_write
+    l1_d_num_write_hit += num_write_hit
+    l1_d_num_write_miss += num_write_miss
     l1_d_num_update += num_update
 
 # L1_I performance
@@ -123,18 +137,31 @@ for i in range(int(num_core)):
     L1_I += ['L1_I_%d' %i]
 
 l1_i_num_read = 0
+l1_i_num_read_hit = 0
+l1_i_num_read_miss = 0
 l1_i_num_write = 0
+l1_i_num_write_hit = 0
+l1_i_num_write_miss = 0
 l1_i_num_update = 0
+
 for l1_i in L1_I:
     (num_read,
+     num_read_hit,
+     num_read_miss,
      num_write,
+     num_write_hit,
+     num_write_miss,
      num_update,
      miss_ratio,
      mpki,
      apkc) = cache_perf(l1_i, num_cycle, num_ins)
 
     l1_i_num_read += num_read
+    l1_i_num_read_hit += num_read_hit
+    l1_i_num_read_miss += num_read_miss
     l1_i_num_write += num_write
+    l1_i_num_write_hit += num_write_hit
+    l1_i_num_write_miss += num_write_miss
     l1_i_num_update += num_update
 
 # L2 performance
@@ -143,38 +170,71 @@ for i in range(int(num_core)):
     L2 += ['L2_%d' %i]
 
 l2_num_read = 0
+l2_num_read_hit = 0
+l2_num_read_miss = 0
 l2_num_write = 0
+l2_num_write_hit = 0
+l2_num_write_miss = 0
 l2_num_update = 0
+
 for l2 in L2:
     (num_read,
+     num_read_hit,
+     num_read_miss,
      num_write,
+     num_write_hit,
+     num_write_miss,
      num_update,
      miss_ratio,
      mpki,
      apkc) = cache_perf(l2, num_cycle, num_ins)
 
     l2_num_read += num_read
+    l2_num_read_hit += num_read_hit
+    l2_num_read_miss += num_read_miss
     l2_num_write += num_write
+    l2_num_write_hit += num_write_hit
+    l2_num_write_miss += num_write_miss
     l2_num_update += num_update
 
 # L3 performance
-if machine == 'ooo_l3' or machine == 'atom_l3':
-    (L3_0_num_read,
-     L3_0_num_write,
-     L3_0_num_update,
-     L3_0_miss_ratio,
-     L3_0_mpki,
-     L3_0_apkc) = cache_perf('L3_0', num_cycle, num_ins)
+l3_num_read = 0
+l3_num_read_hit = 0
+l3_num_read_miss = 0
+l3_num_write = 0
+l3_num_write_hit = 0
+l3_num_write_miss = 0
+l3_num_update = 0
 
-    l3_num_read = L3_0_num_read
-    l3_num_write = L3_0_num_write
-    l3_num_update = L3_0_num_update
-    l3_miss_ratio = L3_0_miss_ratio
-    l3_mpki = L3_0_mpki
-    l3_apkc = L3_0_apkc
+if machine == 'ooo_l3' or machine == 'atom_l3':
+    (num_read,
+     num_read_hit,
+     num_read_miss,
+     num_write,
+     num_write_hit,
+     num_write_miss,
+     num_update,
+     miss_ratio,
+     mpki,
+     apkc) = cache_perf('L3_0', num_cycle, num_ins)
+
+    l3_num_read = num_read
+    l3_num_read_hit = num_read_hit
+    l3_num_read_miss = num_read_miss
+    l3_num_write = num_write
+    l3_num_write_hit = num_write_hit
+    l3_num_write_miss = num_write_miss
+    l3_num_update = num_update
+    l3_miss_ratio = miss_ratio
+    l3_mpki = mpki
+    l3_apkc = apkc
 else:
     l3_num_read = 0
+    l3_num_read_hit = 0
+    l3_num_read_miss = 0
     l3_num_write = 0
+    l3_num_write_hit = 0
+    l3_num_write_miss = 0
     l3_num_update = 0
     l3_miss_ratio = 0
     l3_mpki = 0
@@ -186,23 +246,40 @@ print "IPC=%f MISS_RATIO=%f MPKI=%f APKC=%f" %(ipc,
                                                l3_mpki,
                                                l3_apkc)
 
-print >>fout, "%f %d %f %f %f %d %d %d %d %d %d %d %d %d %d %d %d %d" %(ipc,
-                                                                        num_cycle,
-                                                                        l3_miss_ratio,
-                                                                        l3_mpki,
-                                                                        l3_apkc,
-                                                                        l1_d_num_read,
-                                                                        l1_d_num_write,
-                                                                        l1_d_num_update,
-                                                                        l1_i_num_read,
-                                                                        l1_i_num_write,
-                                                                        l1_i_num_update,
-                                                                        l2_num_read,
-                                                                        l2_num_write,
-                                                                        l2_num_update,
-                                                                        l3_num_read,
-                                                                        l3_num_write,
-                                                                        l3_num_update,
-                                                                        num_refresh)
+print >>fout, "%f %d %f %f %f %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d" %(
+    ipc,
+    num_cycle,
+    l3_miss_ratio,
+    l3_mpki,
+    l3_apkc,
+    l1_d_num_read,
+    l1_d_num_read_hit,
+    l1_d_num_read_miss,
+    l1_d_num_write,
+    l1_d_num_write_hit,
+    l1_d_num_write_miss,
+    l1_d_num_update,
+    l1_i_num_read,
+    l1_i_num_read_hit,
+    l1_i_num_read_miss,
+    l1_i_num_write,
+    l1_i_num_write_hit,
+    l1_i_num_write_miss,
+    l1_i_num_update,
+    l2_num_read,
+    l2_num_read_hit,
+    l2_num_read_miss,
+    l2_num_write,
+    l2_num_write_hit,
+    l2_num_write_miss,
+    l2_num_update,
+    l3_num_read,
+    l3_num_read_hit,
+    l3_num_read_miss,
+    l3_num_write,
+    l3_num_write_hit,
+    l3_num_write_miss,
+    l3_num_update,
+    num_refresh)
 
 fout.close()

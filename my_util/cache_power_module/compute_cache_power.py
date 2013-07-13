@@ -2,18 +2,35 @@
 
 def compute_cache_power(num_cycle,
                         l1_d_num_read,
+                        l1_d_num_read_hit,
+                        l1_d_num_read_miss,
                         l1_d_num_write,
+                        l1_d_num_write_hit,
+                        l1_d_num_write_miss,
                         l1_d_num_update,
                         l1_i_num_read,
+                        l1_i_num_read_hit,
+                        l1_i_num_read_miss,
                         l1_i_num_write,
+                        l1_i_num_write_hit,
+                        l1_i_num_write_miss,
                         l1_i_num_update,
                         l2_num_read,
+                        l2_num_read_hit,
+                        l2_num_read_miss,
                         l2_num_write,
+                        l2_num_write_hit,
+                        l2_num_write_miss,
                         l2_num_update,
                         l3_num_read,
+                        l3_num_read_hit,
+                        l3_num_read_miss,
                         l3_num_write,
+                        l3_num_write_hit,
+                        l3_num_write_miss,
                         l3_num_update,
                         num_refresh,
+                        access_mode,
                         l1_d_leakage_power,
                         l1_d_read_energy,
                         l1_d_write_energy,
@@ -48,23 +65,30 @@ def compute_cache_power(num_cycle,
     elif proc_freq == '4GHz': time = num_cycle * 2.5E-10
 
     # calculate energy
-    l1_d_read_E = (l1_d_num_read*l1_d_read_energy + l1_d_num_update*l1_d_read_energy) * 1E-6 # mJ
+    l1_d_read_E = (l1_d_num_read*l1_d_read_energy) * 1E-6 # mJ
     l1_d_write_E = (l1_d_num_write*l1_d_write_energy + l1_d_num_update*l1_d_write_energy) * 1E-6 # mJ
     l1_d_dynamic_E = l1_d_read_E + l1_d_write_E # mJ
     l1_d_leakage_E = time * l1_d_leakage_power * num_core # mJ
 
-    l1_i_read_E = (l1_i_num_read*l1_i_read_energy + l1_i_num_update*l1_i_read_energy) * 1E-6 # mJ
+    l1_i_read_E = (l1_i_num_read*l1_i_read_energy) * 1E-6 # mJ
     l1_i_write_E = (l1_i_num_write*l1_i_write_energy + l1_i_num_update*l1_i_write_energy) * 1E-6 # mJ
     l1_i_dynamic_E = l1_i_read_E + l1_i_write_E # mJ
     l1_i_leakage_E = time * l1_i_leakage_power * num_core # mJ
 
-    l2_read_E = (l2_num_read*l2_read_energy + l2_num_update*l2_read_energy) * 1E-6 # mJ
+    l2_read_E = (l2_num_read*l2_read_energy) * 1E-6 # mJ
     l2_write_E = (l2_num_write*l2_write_energy + l2_num_update*l2_write_energy) * 1E-6 # mJ
     l2_dynamic_E = l2_read_E + l2_write_E # mJ
     l2_leakage_E = time * l2_leakage_power * num_core # mJ
 
-    l3_read_E = (l3_num_read*l3_read_energy + l3_num_update*l3_tag_energy) * 1E-6 # mJ
-    l3_write_E = (l3_num_write*l3_write_energy + l3_num_update*l3_write_energy) * 1E-6 # mJ
+    # sequential access 
+    if (access_mode == "seq"):
+        l3_read_E = (l3_num_read_hit*l3_read_energy + (l3_num_read_miss+l3_num_write_miss)*l3_tag_energy) * 1E-6 # mJ
+        l3_write_E = (l3_num_write_hit*l3_write_energy + l3_num_update*l3_write_energy) * 1E-6 # mJ
+    # parallel access
+    elif (access_mode == "par"):
+        l3_read_E = (l3_num_read*l3_read_energy) * 1E-6 # mJ
+        l3_write_E = (l3_num_write*l3_write_energy + l3_num_update*l3_write_energy) * 1E-6 # mJ
+
     l3_dynamic_E = l3_read_E + l3_write_E # mJ
     l3_leakage_E = time * l3_leakage_power * num_bank # mJ
     l3_refresh_E = num_refresh * l3_refresh_energy * 1E-6 # mJ
