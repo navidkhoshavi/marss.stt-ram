@@ -40,6 +40,19 @@ def sram_power(tech_node, cache_size, implementation, temperature):
             l2_leakage_power = 99.28
             l2_read_energy = 0.22
             l2_write_energy = 0.27
+    elif tech_node == '22nm':
+        if temperature == '75C':
+            l1_d_leakage_power = 50.99
+            l1_d_read_energy = 0.37
+            l1_d_write_energy = 0.38
+            
+            l1_i_leakage_power = 50.99
+            l1_i_read_energy = 0.37
+            l1_i_write_energy = 0.38
+            
+            l2_leakage_power = 118.87
+            l2_read_energy = 0.18
+            l2_write_energy = 0.22
 
     # L3 power
     if tech_node == '45nm':
