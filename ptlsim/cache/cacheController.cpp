@@ -657,6 +657,9 @@ bool CacheController::cache_access_cb(void *arg)
                         goto retry_cache_access;
                     }
                 }
+
+		N_STAT_UPDATE(new_stats.cpurequest.update, ++, kernel_req);
+
 			} else if(type == MEMORY_OP_EVICT) {
                 if(is_private()) {
                     line->state = LINE_NOT_VALID;

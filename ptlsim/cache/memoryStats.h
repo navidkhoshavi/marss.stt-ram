@@ -130,11 +130,14 @@ struct BaseCacheStats : public Statable
 
         StatObj<W64> redirects;
 
+	StatObj<W64> update;
+
         cpurequest(Statable *parent)
             : Statable("cpurequest", parent)
               , count(this)
               , stall(this)
               , redirects("redirects", this)
+	  , update("update", this)
         {}
     } cpurequest;
 
