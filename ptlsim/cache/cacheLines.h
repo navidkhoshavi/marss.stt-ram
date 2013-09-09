@@ -355,7 +355,13 @@ namespace Memory {
                     rc = (readPortUsed_[accessBankID] < readPorts_[accessBankID]) ? ++readPortUsed_[accessBankID] : 0;
                     break;
                 case MEMORY_OP_WRITE:
+		  // For an LLC, MEMORY_OP_WRITE is more like a read operation that loads to upper caches on hit
+		  rc = (readPortUsed_[accessBankID] < readPorts_[accessBankID]) ? ++readPortUsed_[accessBankID] : 0;
+		  break;
                 case MEMORY_OP_UPDATE:
+		  // MEMORY_OP_UPDATE = writeback from upper caches in the case of LLC
+		  rc = (writePortUsed_[accessBankID] < writePorts_[accessBankID]) ? ++writePortUsed_[accessBankID] : 0;
+		  break;
                 case MEMORY_OP_EVICT:
                     rc = (writePortUsed_[accessBankID] < writePorts_[accessBankID]) ? ++writePortUsed_[accessBankID] : 0;
                     break;
