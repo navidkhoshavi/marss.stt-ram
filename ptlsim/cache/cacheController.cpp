@@ -252,6 +252,7 @@ bool CacheController::handle_interconnect_cb(void *arg)
 #ifdef LLC_TRACE
 			W64 lineAddress = get_line_address(msg->request);
 			OP_TYPE access_type = msg->request->get_type();
+			// access type = MEMORY_OP_READ or MEMORY_OP_WRITE or MEMORY_OP_UPDATE or MEMORY_OP_EVICT
 			llc_tracefile << sim_cycle << " " << access_type << " " << lineAddress << endl;
 #endif
 		}
@@ -288,6 +289,12 @@ bool CacheController::handle_interconnect_cb(void *arg)
 					queueEntry->eventFlags[CACHE_INSERT_EVENT]++;
 					marss_add_event(&cacheInsert_, 1,
 							(void*)(queueEntry));
+
+#ifdef LLC_TRACE
+					// access type = 4 = prefetch
+					llc_tracefile << sim_cycle << " " << 4 << " " << 0 << endl;
+#endif
+
 				} else if(msg->request == queueEntry->request ||
 						(msg->request != queueEntry->request &&
 						 queueEntry->request->get_type() ==
@@ -306,6 +313,12 @@ bool CacheController::handle_interconnect_cb(void *arg)
 							(void*)(queueEntry));
 					marss_add_event(&waitInterconnect_, 0,
 							(void*)(queueEntry));
+
+#ifdef LLC_TRACE
+					// access type = 5 = insert (MEM writes LLC)
+					llc_tracefile << sim_cycle << " " << 5 << " " << 0 << endl;
+#endif
+
 				}
 			} else if (!is_lowest_private()) {
                 /*

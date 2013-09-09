@@ -158,6 +158,12 @@ bool MemoryController::handle_interconnect_cb(void *arg)
 				break;
 			}
 		}
+
+#ifdef LLC_TRACE
+		// access type = 6 = writeback (LLC writes MEM)
+		llc_tracefile << sim_cycle << " " << 6 << " " << 0 << endl;
+#endif
+
 	}
 
 	MemoryQueueEntry *queueEntry = pendingRequests_.alloc();
