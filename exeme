@@ -4,7 +4,6 @@
 # img benchmark memory tech_node cache_size implementation core_freq temperature num_core num_bank machine
 dir=$2_$3_$4_$5_$6_$7_$8_$9_${10}_${11}
 
-echo -e "Subject: $dir\n`pwd` Start" | ssmtp mutien.chang@gmail.com
 ./run_bench.py $1 $2 $7 ${11}
 ./util/mstats.py -y --yaml-out $2.stats > $2.txt
 
@@ -27,4 +26,4 @@ else
     mv *.dat $dir
 fi
 
-echo -e "Subject: $dir\n`pwd` Finish" | ssmtp mutien.chang@gmail.com
+echo -e "Subject: $HOSTNAME $dir\n`pwd` Finish" | ssmtp mutien.chang@gmail.com
