@@ -46,7 +46,7 @@ burst_power = burst_energy / (total_cycle * CYCLE_TIME)
 refresh_power = refresh_energy / (total_cycle * CYCLE_TIME)
 
 print >>fout1, "%f %f %f %f %f" %(power, background_power, actpre_power, burst_power, refresh_power) # mW
-print >>fout2, "%f %f %f %f %f" %(energy*1E-3, background_energy*1E-3, actpre_energy*1E-3, burst_energy*1E-3, refresh_energy*1E-3) # J
+print >>fout2, "%f %f %f %f %f" %(energy, background_energy, actpre_energy, burst_energy, refresh_energy) # mJ
 
 fin.close()
 fout1.close()

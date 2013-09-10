@@ -42,6 +42,7 @@ def cache_perf(cache_object, num_cycle, num_ins):
     read_hit = re.compile("          read: {forward: ([0-9]+), hit: ([0-9]+)}")
     write_hit = re.compile("          write: {forward: ([0-9]+), hit: ([0-9]+)}")
     miss = re.compile("        miss: {read: ([0-9]+), write: ([0-9]+)}")
+    update = re.compile("      update: ([0-9]+)")
 
     flag = 0
 
@@ -56,6 +57,8 @@ def cache_perf(cache_object, num_cycle, num_ins):
     write_miss_ratio = 0.0
     
     miss_ratio = 0.0
+
+    num_update = 0 # number of updates from upper caches
     
     num_access = 0
     num_access_per_kins = 0.0
@@ -68,7 +71,8 @@ def cache_perf(cache_object, num_cycle, num_ins):
         r = read_hit.match(line)
         w = write_hit.match(line)
         m = miss.match(line)
-        
+        u = update.match(line)
+
         if s is not None: flag = 1
         if flag == 1:
             if r is not None: num_read_hit = int(r.group(2))
@@ -76,17 +80,19 @@ def cache_perf(cache_object, num_cycle, num_ins):
             if m is not None:
                 num_read_miss = int(m.group(1))
                 num_write_miss = int(m.group(2))
+            if u is not None: 
+                num_update = int(u.group(1))
                 flag = 0
+
     fin2.close()
 
     num_read = num_read_hit + num_read_miss
     num_write = num_write_hit + num_write_miss
-    num_update = num_read_miss + num_write_miss
+    num_insert = num_read_miss + num_write_miss
     miss_ratio = float(num_read_miss + num_write_miss) / (num_read + num_write)
     mpki = 1E3 * float(num_read_miss + num_write_miss) / num_ins
-    apkc = 1E3 * float(num_read + num_write) / num_cycle # num access per kilo cycle
 
-    return num_read, num_read_hit, num_read_miss, num_write, num_write_hit, num_write_miss, num_update, miss_ratio, mpki, apkc
+    return num_read, num_read_hit, num_read_miss, num_write, num_write_hit, num_write_miss, num_update, num_insert, miss_ratio, mpki
 
 
 # === main ===
@@ -110,6 +116,7 @@ l1_d_num_write = 0
 l1_d_num_write_hit = 0
 l1_d_num_write_miss = 0
 l1_d_num_update = 0
+l1_d_num_insert = 0
 
 for l1_d in L1_D:
     (num_read,
@@ -119,9 +126,9 @@ for l1_d in L1_D:
      num_write_hit,
      num_write_miss,
      num_update,
+     num_insert,
      miss_ratio,
-     mpki,
-     apkc) = cache_perf(l1_d, num_cycle, num_ins)
+     mpki) = cache_perf(l1_d, num_cycle, num_ins)
 
     l1_d_num_read += num_read
     l1_d_num_read_hit += num_read_hit
@@ -130,6 +137,7 @@ for l1_d in L1_D:
     l1_d_num_write_hit += num_write_hit
     l1_d_num_write_miss += num_write_miss
     l1_d_num_update += num_update
+    l1_d_num_insert += num_insert
 
 # L1_I performance
 L1_I = []
@@ -143,6 +151,7 @@ l1_i_num_write = 0
 l1_i_num_write_hit = 0
 l1_i_num_write_miss = 0
 l1_i_num_update = 0
+l1_i_num_insert = 0
 
 for l1_i in L1_I:
     (num_read,
@@ -152,9 +161,9 @@ for l1_i in L1_I:
      num_write_hit,
      num_write_miss,
      num_update,
+     num_insert,
      miss_ratio,
-     mpki,
-     apkc) = cache_perf(l1_i, num_cycle, num_ins)
+     mpki) = cache_perf(l1_i, num_cycle, num_ins)
 
     l1_i_num_read += num_read
     l1_i_num_read_hit += num_read_hit
@@ -163,6 +172,7 @@ for l1_i in L1_I:
     l1_i_num_write_hit += num_write_hit
     l1_i_num_write_miss += num_write_miss
     l1_i_num_update += num_update
+    l1_i_num_insert += num_insert
 
 # L2 performance
 L2 = []
@@ -176,6 +186,7 @@ l2_num_write = 0
 l2_num_write_hit = 0
 l2_num_write_miss = 0
 l2_num_update = 0
+l2_num_insert = 0
 
 for l2 in L2:
     (num_read,
@@ -185,9 +196,9 @@ for l2 in L2:
      num_write_hit,
      num_write_miss,
      num_update,
+     num_insert,
      miss_ratio,
-     mpki,
-     apkc) = cache_perf(l2, num_cycle, num_ins)
+     mpki) = cache_perf(l2, num_cycle, num_ins)
 
     l2_num_read += num_read
     l2_num_read_hit += num_read_hit
@@ -196,6 +207,7 @@ for l2 in L2:
     l2_num_write_hit += num_write_hit
     l2_num_write_miss += num_write_miss
     l2_num_update += num_update
+    l2_num_insert += num_insert
 
 # L3 performance
 l3_num_read = 0
@@ -214,9 +226,9 @@ if machine == 'ooo_l3' or machine == 'atom_l3':
      num_write_hit,
      num_write_miss,
      num_update,
+     num_insert,
      miss_ratio,
-     mpki,
-     apkc) = cache_perf('L3_0', num_cycle, num_ins)
+     mpki) = cache_perf('L3_0', num_cycle, num_ins)
 
     l3_num_read = num_read
     l3_num_read_hit = num_read_hit
@@ -225,9 +237,10 @@ if machine == 'ooo_l3' or machine == 'atom_l3':
     l3_num_write_hit = num_write_hit
     l3_num_write_miss = num_write_miss
     l3_num_update = num_update
+    l3_num_insert = num_insert
     l3_miss_ratio = miss_ratio
     l3_mpki = mpki
-    l3_apkc = apkc
+
 else:
     l3_num_read = 0
     l3_num_read_hit = 0
@@ -236,50 +249,46 @@ else:
     l3_num_write_hit = 0
     l3_num_write_miss = 0
     l3_num_update = 0
+    l3_num_insert = 0
     l3_miss_ratio = 0
     l3_mpki = 0
-    l3_apkc = 0
 
 # print results
-print "IPC=%f MISS_RATIO=%f MPKI=%f APKC=%f" %(ipc,
-                                               l3_miss_ratio,
-                                               l3_mpki,
-                                               l3_apkc)
+print "IPC=%f MISS_RATIO=%f MPKI=%f" %(ipc, l3_miss_ratio, l3_mpki)
 
-print >>fout, "%f %d %f %f %f %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d" %(
-    ipc,
-    num_cycle,
-    l3_miss_ratio,
-    l3_mpki,
-    l3_apkc,
-    l1_d_num_read,
-    l1_d_num_read_hit,
-    l1_d_num_read_miss,
-    l1_d_num_write,
-    l1_d_num_write_hit,
-    l1_d_num_write_miss,
-    l1_d_num_update,
-    l1_i_num_read,
-    l1_i_num_read_hit,
-    l1_i_num_read_miss,
-    l1_i_num_write,
-    l1_i_num_write_hit,
-    l1_i_num_write_miss,
-    l1_i_num_update,
-    l2_num_read,
-    l2_num_read_hit,
-    l2_num_read_miss,
-    l2_num_write,
-    l2_num_write_hit,
-    l2_num_write_miss,
-    l2_num_update,
-    l3_num_read,
-    l3_num_read_hit,
-    l3_num_read_miss,
-    l3_num_write,
-    l3_num_write_hit,
-    l3_num_write_miss,
-    l3_num_update,
-    num_refresh)
+print >>fout, "%f %d %f %f " %(ipc, num_cycle, l3_miss_ratio, l3_mpki),
+print >>fout, "%d %d %d %d %d %d %d %d " %(l1_d_num_read,
+                                           l1_d_num_read_hit,
+                                           l1_d_num_read_miss,
+                                           l1_d_num_write,
+                                           l1_d_num_write_hit,
+                                           l1_d_num_write_miss,
+                                           l1_d_num_update,
+                                           l1_d_num_insert),
+print >>fout, "%d %d %d %d %d %d %d %d " %(l1_i_num_read,
+                                           l1_i_num_read_hit,
+                                           l1_i_num_read_miss,
+                                           l1_i_num_write,
+                                           l1_i_num_write_hit,
+                                           l1_i_num_write_miss,
+                                           l1_i_num_update,
+                                           l1_i_num_insert),
+print >>fout, "%d %d %d %d %d %d %d %d " %(l2_num_read,
+                                           l2_num_read_hit,
+                                           l2_num_read_miss,
+                                           l2_num_write,
+                                           l2_num_write_hit,
+                                           l2_num_write_miss,
+                                           l2_num_update,
+                                           l2_num_insert),
+print >>fout, "%d %d %d %d %d %d %d %d %d " %(l3_num_read,
+                                           l3_num_read_hit,
+                                           l3_num_read_miss,
+                                           l3_num_write,
+                                           l3_num_write_hit,
+                                           l3_num_write_miss,
+                                           l3_num_update,
+                                           l3_num_insert,
+                                           num_refresh),
 
 fout.close()
