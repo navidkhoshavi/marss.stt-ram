@@ -281,7 +281,7 @@ print >>fout, "%d %d %d %d %d %d %d %d " %(l2_num_read,
                                            l2_num_write_miss,
                                            l2_num_update,
                                            l2_num_insert),
-print >>fout, "%d %d %d %d %d %d %d %d %d " %(l3_num_read,
+print >>fout, "%d %d %d %d %d %d %d %d %d" %(l3_num_read,
                                            l3_num_read_hit,
                                            l3_num_read_miss,
                                            l3_num_write,
@@ -289,6 +289,6 @@ print >>fout, "%d %d %d %d %d %d %d %d %d " %(l3_num_read,
                                            l3_num_write_miss,
                                            l3_num_update,
                                            l3_num_insert,
-                                           num_refresh),
+                                           num_refresh)
 
 fout.close()
