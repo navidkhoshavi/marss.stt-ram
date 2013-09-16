@@ -615,7 +615,10 @@ bool CacheController::cache_access_cb(void *arg)
 				delay = cacheAccessLatency_;
 
 				if (type == MEMORY_OP_WRITE) {
-				  delay = writeLatency_;
+				  // delay is read latency instead of write latency
+				  // because a memory write request to the LLC reads
+				  // the LLC and allocate the line to the upper level cache 
+				  delay = cacheAccessLatency_;
 				}
 
 				queueEntry->eventFlags[CACHE_HIT_EVENT]++;
