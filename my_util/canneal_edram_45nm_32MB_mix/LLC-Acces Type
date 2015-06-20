@@ -1,0 +1,5 @@
+// access type = 4 = prefetch
+// access type = 5 = insert (MEM writes LLC)
+// access type = MEMORY_OP_READ or MEMORY_OP_WRITE or MEMORY_OP_UPDATE or MEMORY_OP_EVICT
+// access type = 6 = writeback (LLC writes MEM)
+

@@ -1,5 +1,5 @@
 # Automatically generated config file - do not modify
-SRC_PATH=/home/mutien/cmp/marss.llc/qemu/roms/seabios
+SRC_PATH=/media/nvidia/MyFile2/marss.llc/marss.llc/qemu/roms/seabios
 CC=g++
 BCC=bcc
 CPP=cpp

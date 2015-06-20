@@ -12,7 +12,7 @@
 #endif
 
 #define QEMU_BUILD_BUG_ON(x) typedef char __build_bug_on__##__LINE__[(x)?-1:1];
-
+#define BIT(n) (1 << (n))
 typedef struct QEMUTimer QEMUTimer;
 typedef struct QEMUFile QEMUFile;
 typedef struct QEMUBH QEMUBH;
@@ -56,6 +56,8 @@ typedef struct DeviceState DeviceState;
 
 #ifndef CONFIG_IOVEC
 #define CONFIG_IOVEC
+
+
 struct iovec {
     void *iov_base;
     size_t iov_len;

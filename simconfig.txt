@@ -1,4 +1,6 @@
 -machine ooo_l3
--corefreq 2000000000
+-corefreq 3000000000
 -logfile test.log
 -stats test.stats
+-fast-fwd-insns 500m
+-stopinsns 1000m

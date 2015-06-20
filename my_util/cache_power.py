@@ -6,6 +6,7 @@ from cache_power_module.get_perf_dat import *
 from cache_power_module.cache_power_map import *
 from cache_power_module.compute_cache_power import *
 
+# python cache_power.py edram 45nm 32MB lp 3GH 75 1 64 ooo_l3  #my change
 # === initialization ===
 mem_type = sys.argv[1] # memory type (sram, sttram, edram)
 tech_node = sys.argv[2] # technology node (45nm, 32nm, 22nm)

@@ -50,6 +50,7 @@ PTLsimMachine ptl_machine;
 
 ofstream ptl_logfile;
 ofstream llc_tracefile;
+//#DEFINE TRACE_RIP
 #ifdef TRACE_RIP
 ofstream ptl_rip_trace;
 #endif

@@ -1,0 +1,12 @@
+parsecmgmt -a run -x roi -c gcc-hooks -n 8 -p (BENCH)
+simconfig -machine ooo_l3 -corefreq 3000000000 -logfile <bench>.log -stats <bench>.stats
+
+
+Please use below command for running benchmarks:
+parsecmgmt -a run -x roi -c gcc-hooks -n 8 -p (BENCH)
+simconfig -machine ooo_l3 -corefreq 3000000000 -logfile <bench>.log -stats <bench>.stats
+./start_sim; ./parsec2.1/bin/parsecmgmt -a run -x roi -c gcc-hooks -n 8 -p (BENCH); ./stop_sim;
+
+
+or
+./start_sim; ./parsec2.1/bin/parsecmgmt -a run -c gcc-hooks -p (BENCH) -i simsmall; ./stop_sim;

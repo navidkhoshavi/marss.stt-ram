@@ -1,4 +1,3 @@
-
 # Top level SConstruct for MARSSx86
 
 import os
