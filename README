@@ -1,12 +1,13 @@
-marss.llc is an expanded version of marss.dramsim, 
+marss.stt-ram is an expanded version of marss.llc, 
 with the following modifications to MARSS:
 - A refresh controller to support eDRAM LLCs
 - Assymetric read and write latencies to support MRAM LLCs
 - Paraterized cycle time, tag access time, and refresh period
 - Dead line predictors to support low power SRAM and eDRAM LLCs
+- A methodology to move data from LLc eDRAM to L2 STT-RAM
 
-Mu-Tien Chang
-01/2013
+Navid Khoshavi
+06/2015
 =========================================================
 MARSSx86+DRAMSim2 -- see here http://wiki.github.com/dramninjasUMD/DRAMSim2/marssx86-with-dramsim2
 
